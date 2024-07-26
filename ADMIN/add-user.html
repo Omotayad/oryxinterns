@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add User - Admin Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+
+<body class="bg-gray-100">
+    <div class="min-h-screen flex flex-col">
+        <!-- Navbar -->
+        <nav class="bg-blue-800 text-white p-4">
+            <div class="container mx-auto flex justify-between items-center">
+                <h1 class="text-2xl font-bold">Admin Dashboard</h1>
+                <div class="space-x-4">
+                    <a href="admin.html" class="hover:text-blue-200">Dashboard</a>
+                    <a href="#" id="logoutLink" class="hover:text-blue-200">Logout</a>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <div class="flex-grow container mx-auto px-4 py-8">
+            <h2 class="text-2xl font-bold mb-4">Add New User</h2>
+            <form id="addUserForm" class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4"
+                onsubmit="return addUser(event)">
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="username">
+                        Username
+                    </label>
+                    <input
+                        class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                        id="username" type="text" placeholder="Username">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="password">
+                        Password
+                    </label>
+                    <input
+                        class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 mb-3 leading-tight focus:outline-none focus:shadow-outline"
+                        id="password" type="password" placeholder="******************">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="role">
+                        Role
+                    </label>
+                    <select
+                        class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                        id="role">
+                        <option>User</option>
+                        <option>Admin</option>
+                    </select>
+                </div>
+                <div class="flex items-center justify-between">
+                    <button
+                        class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                        type="submit">
+                        Add User
+                    </button>
+                </div>
+                <div id="success-message" class="text-green-500 text-sm mt-2  font-bold"></div>
+            </form>
+        </div>
+
+        <!-- Footer -->
+        <footer class="bg-gray-800 text-white py-4">
+            <div class="container mx-auto text-center">
+                <p>&copy; 2024 NHP. All rights reserved.</p>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        async function addUser(event) {
+            event.preventDefault();
+
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const role = document.getElementById('role').value;
+            const successMessage = document.getElementById('success-message');
+
+            if (!username || !password || !role) {
+                successMessage.innerText = 'Please fill in all fields';
+                successMessage.classList.remove('text-green-500');
+                successMessage.classList.add('text-red-500');
+                return false;
+            }
+
+            const userData = {
+                username: username,
+                password: password,
+                role: role.toLowerCase()
+            };
+
+            try {
+                const response = await fetch('http://127.0.0.1:5002/admin/add-user', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + localStorage.getItem('adminAuthToken')
+                    },
+                    body: JSON.stringify(userData)
+                });
+
+                if (response.ok) {
+                    successMessage.innerText = 'User added successfully';
+                    successMessage.classList.remove('text-red-500');
+                    successMessage.classList.add('text-green-500');
+                    document.getElementById('addUserForm').reset();
+                } else {
+                    const errorData = await response.json();
+                    successMessage.innerText = `Failed to add user: ${errorData.message}`;
+                    successMessage.classList.remove('text-green-500');
+                    successMessage.classList.add('text-red-500');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                successMessage.innerText = 'An error occurred while adding the user';
+                successMessage.classList.remove('text-green-500');
+                successMessage.classList.add('text-red-500');
+            }
+
+            return false;
+        }
+
+        // Logout functionality
+        document.getElementById('logoutLink').addEventListener('click', async (e) => {
+            e.preventDefault();
+            try {
+                const response = await fetch('http://127.0.0.1:5002/logout', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer ' + localStorage.getItem('adminAuthToken')
+                    }
+                });
+                if (response.ok) {
+                    localStorage.removeItem('adminAuthToken');
+                    alert('Logged out successfully');
+                    window.location.href = 'admin-login.html';
+                } else {
+                    alert('Logout failed');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred during logout');
+            }
+        });
+
+        // Check for admin authentication on page load
+        document.addEventListener('DOMContentLoaded', function () {
+            const adminAuthToken = localStorage.getItem('adminAuthToken');
+            if (!adminAuthToken) {
+                // Redirect to admin login page if not authenticated
+                window.location.href = 'admin-login.html';
+            }
+        });
+    </script>
+</body>
+
+</html>
