@@ -1,0 +1,51 @@
+<script>
+        // Add this to your existing JavaScript in index.html
+        function logout() {
+            const token = localStorage.getItem('authToken');
+            if (token) {
+                fetch('http://127.0.0.1:5001/logout', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer ' + token
+                    }
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log(data.message);
+                        localStorage.removeItem('authToken');
+                        checkAuth();
+                    })
+                    .catch(error => console.error('Error:', error));
+            }
+        }
+
+        // Modify the existing checkAuth function
+        function checkAuth() {
+            const token = localStorage.getItem('authToken');
+            const mainContent = document.getElementById('mainContent');
+            const unauthorizedMessage = document.getElementById('unauthorizedMessage');
+            const loginLink = document.getElementById('loginLink');
+            const logoutLink = document.getElementById('logoutLink');
+
+            if (token) {
+                mainContent.classList.remove('hidden');
+                unauthorizedMessage.classList.add('hidden');
+                loginLink.classList.add('hidden');
+                logoutLink.classList.remove('hidden');
+            } else {
+                mainContent.classList.add('hidden');
+                unauthorizedMessage.classList.remove('hidden');
+                loginLink.classList.remove('hidden');
+                logoutLink.classList.add('hidden');
+            }
+        }
+
+        // Modify the logout link event listener
+        document.getElementById('logoutLink').addEventListener('click', (e) => {
+            e.preventDefault();
+            logout();
+        });
+
+        // Check auth status on page load
+        checkAuth();
+    </script>

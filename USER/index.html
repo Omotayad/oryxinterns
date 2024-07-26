@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sales Prediction Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body class="bg-gray-100">
+    <div class="min-h-screen flex flex-col">
+        <!-- Navbar -->
+        <nav class="bg-blue-600 text-white p-4">
+            <div class="container mx-auto flex justify-between items-center">
+                <h1 class="text-2xl font-bold">Sales Prediction Dashboard</h1>
+                <div class="space-x-4 flex items-center">
+                    <a href="index.html" class="hover:text-blue-200">Home</a>
+                    <a href="login.html" class="hover:text-blue-200" id="loginLink">Login</a>
+                    <a href="#" class="hover:text-blue-200 hidden" id="logoutLink">Logout</a>
+                    <button id="downloadPredictions"
+                        class="bg-green-500 hover:bg-green-600 text-white font-bold py-1 px-3 rounded-md text-sm transition duration-300">
+                        Download Predictions
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <div id="mainContent" class="flex-grow container mx-auto px-4 py-8">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Prediction Form -->
+                <div class="md:col-span-2 bg-white rounded-lg shadow-md p-6">
+                    <h2 class="text-2xl font-bold mb-4">Sales Prediction</h2>
+                    <form id="predictionForm" class="space-y-4">
+                        <div>
+                            <label for="itemNameSearch" class="block text-sm font-medium text-gray-700">Item
+                                Name</label>
+                            <div class="relative">
+                                <input type="text" id="itemNameSearch" name="itemNameSearch"
+                                    class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                    placeholder="Search for an item" autocomplete="off">
+                                <div id="itemNameSuggestions"
+                                    class="absolute z-10 bg-white border border-gray-300 rounded-md mt-1 w-full hidden">
+                                </div>
+                            </div>
+                            <input type="hidden" id="itemName" name="itemName">
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label for="year" class="block text-sm font-medium text-gray-700">Year</label>
+                                <input type="number" id="year" name="year"
+                                    class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                    required>
+                            </div>
+                            <div>
+                                <label for="lineTotal" class="block text-sm font-medium text-gray-700">Line
+                                    Total</label>
+                                <input type="number" id="lineTotal" name="lineTotal"
+                                    class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                    required>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label for="quantity" class="block text-sm font-medium text-gray-700">Quantity</label>
+                                <input type="number" id="quantity" name="quantity"
+                                    class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                    required>
+                            </div>
+                            <div>
+                                <label for="itemCost" class="block text-sm font-medium text-gray-700">Item Cost</label>
+                                <input type="number" id="itemCost" name="itemCost"
+                                    class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                    required>
+                            </div>
+                        </div>
+                        <div>
+                            <label for="doctype" class="block text-sm font-medium text-gray-700">Document Type</label>
+                            <select id="doctype" name="doctype" class="w-full border border-gray-300 rounded px-3 py-2"
+                                required>
+                                <option value="Invoice" selected>Invoice</option>
+                                <option value="Credit Memo">Credit Memo</option>
+                            </select>
+                        </div>
+                        <button type="submit"
+                            class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md transition duration-300">
+                            Predict Sales
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Prediction Result -->
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h2 class="text-2xl font-bold mb-4">Prediction Result</h2>
+                    <div id="predictionResult" class="hidden">
+                        <div class="text-4xl font-bold text-blue-600 mb-2">₦<span id="prediction"></span></div>
+                        <p class="text-gray-600">Estimated Gross Profit</p>
+                    </div>
+                    <div id="noPrediction" class="text-gray-500">
+                        No prediction made yet. Fill out the form to get a sales prediction.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Centered Charts and Stats -->
+            <div class="mt-8 flex justify-center">
+                <div class="bg-white rounded-lg shadow-md p-6 w-full max-w-4xl">
+                    <h3 class="text-xl font-bold mb-4">Historical Sales Trend</h3>
+                    <div class="chart-container" style="position: relative; height: 300px;">
+                        <canvas id="salesTrendChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="unauthorizedMessage" class="flex-grow container mx-auto px-4 py-8 text-center hidden">
+            <h2 class="text-2xl font-bold mb-4">Unauthorized Access</h2>
+            <p>Please <a href="login.html" class="text-blue-600 hover:underline">login</a> to access the dashboard.</p>
+        </div>
+
+        <!-- Footer -->
+        <footer class="bg-gray-800 text-white py-4">
+            <div class="container mx-auto text-center">
+                <p>&copy; 2024 NHP. All rights reserved.</p>
+            </div>
+        </footer>
+    </div>
+
+    <script src="fine.js"></script>
+    <script>
+        // Add this to your existing JavaScript in index.html
+        function logout() {
+            const token = localStorage.getItem('authToken');
+            if (token) {
+                fetch('http://127.0.0.1:5001/logout', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer ' + token
+                    }
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log(data.message);
+                        localStorage.removeItem('authToken');
+                        checkAuth();
+                    })
+                    .catch(error => console.error('Error:', error));
+            }
+        }
+
+        // Modify the existing checkAuth function
+        function checkAuth() {
+            const token = localStorage.getItem('authToken');
+            const mainContent = document.getElementById('mainContent');
+            const unauthorizedMessage = document.getElementById('unauthorizedMessage');
+            const loginLink = document.getElementById('loginLink');
+            const logoutLink = document.getElementById('logoutLink');
+
+            if (token) {
+                mainContent.classList.remove('hidden');
+                unauthorizedMessage.classList.add('hidden');
+                loginLink.classList.add('hidden');
+                logoutLink.classList.remove('hidden');
+            } else {
+                mainContent.classList.add('hidden');
+                unauthorizedMessage.classList.remove('hidden');
+                loginLink.classList.remove('hidden');
+                logoutLink.classList.add('hidden');
+            }
+        }
+
+        // Modify the logout link event listener
+        document.getElementById('logoutLink').addEventListener('click', (e) => {
+            e.preventDefault();
+            logout();
+        });
+
+        // Check auth status on page load
+        checkAuth();
+    </script>
+</body>
+
+</html>
